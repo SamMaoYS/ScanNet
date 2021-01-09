@@ -180,10 +180,12 @@ vector<int> segment(const string& meshFile, const float kthr, const int segMinVe
   if (vertexSize == sizeof(double)) {
       double * tmpData = reinterpret_cast<double *>(vertsData);
       verts.assign(tmpData, tmpData+vertexInstanceSize);
+      delete [] tmpData;
   }
   else if (vertexSize == sizeof(float )){
       float * tmpData = reinterpret_cast<float *>(vertsData);
       verts.assign(tmpData, tmpData+vertexInstanceSize);
+      delete [] tmpData;
   }
   else {
       throw std::runtime_error("destination vector is wrongly typed to hold this property");
@@ -192,6 +194,7 @@ vector<int> segment(const string& meshFile, const float kthr, const int segMinVe
   if (faceSize == sizeof (uint32_t)) {
       uint32_t * tmpData = reinterpret_cast<uint32_t *>(facesData);
       faces.assign(tmpData, tmpData+faceInstanceSize);
+      delete [] tmpData;
   }
   else {
       throw std::runtime_error("destination vector is wrongly typed to hold this property");
