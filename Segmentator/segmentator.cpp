@@ -124,18 +124,24 @@ vector<int> segment(const string& meshFile, const float kthr, const int segMinVe
   //std::cout << "Loading mesh " << meshFile << std::endl;
   vector<float> verts;
   vector<uint32_t> faces;
+  void * vertsData;
+  void * facesData;
+  size_t vertexSize = 0;
+  size_t faceSize = 0;
   size_t vertexCount = 0;
   size_t faceCount = 0;
+  size_t vertexInstanceSize = 0;
+  size_t faceInstanceSize = 0;
 
   if (ends_with(meshFile, ".ply") || ends_with(meshFile, ".PLY")) {
     // Load the geometry from .ply
     std::ifstream ss(meshFile, std::ios::binary);
     tinyply::PlyFile file(ss);
-    vertexCount = file.request_properties_from_element("vertex", { "x", "y", "z" }, verts);
+    vertexCount = file.request_properties_from_element("vertex", { "x", "y", "z" }, vertsData, vertexSize, vertexInstanceSize);
     // Try getting vertex_indices or vertex_index
-    faceCount = file.request_properties_from_element("face", { "vertex_indices" }, faces, 3);
+    faceCount = file.request_properties_from_element("face", { "vertex_indices" }, facesData, faceSize, faceInstanceSize, 3);
     if (faceCount == 0) {
-      faceCount = file.request_properties_from_element("face", { "vertex_index" }, faces, 3);
+      faceCount = file.request_properties_from_element("face", { "vertex_index" }, facesData, faceSize, faceInstanceSize, 3);
     }
     file.read(ss);
   } else if (ends_with(meshFile, ".obj") || ends_with(meshFile, ".OBJ")) {
@@ -169,6 +175,26 @@ vector<int> segment(const string& meshFile, const float kthr, const int segMinVe
         faces.push_back(idx);
       }
     }
+  }
+
+  if (vertexSize == sizeof(double)) {
+      double * tmpData = reinterpret_cast<double *>(vertsData);
+      verts.assign(tmpData, tmpData+vertexInstanceSize);
+  }
+  else if (vertexSize == sizeof(float )){
+      float * tmpData = reinterpret_cast<float *>(vertsData);
+      verts.assign(tmpData, tmpData+vertexInstanceSize);
+  }
+  else {
+      throw std::runtime_error("destination vector is wrongly typed to hold this property");
+  }
+
+  if (faceSize == sizeof (uint32_t)) {
+      uint32_t * tmpData = reinterpret_cast<uint32_t *>(facesData);
+      faces.assign(tmpData, tmpData+faceInstanceSize);
+  }
+  else {
+      throw std::runtime_error("destination vector is wrongly typed to hold this property");
   }
 
   printf("Read mesh with vertexCount %lu %lu, faceCount %lu %lu\n", 

@@ -219,8 +219,8 @@ namespace tinyply
 		std::vector<std::string> comments;
 		std::vector<std::string> objInfo;
 
-		template<typename T>
-		size_t request_properties_from_element(const std::string & elementKey, std::vector<std::string> propertyKeys, std::vector<T> & source, const int listCount = 1)
+//		template<typename T>
+		size_t request_properties_from_element(const std::string & elementKey, std::vector<std::string> propertyKeys, void * &source, size_t & dataSize, size_t &totalInstanceSize, const int listCount = 1)
 		{
 			if (get_elements().size() == 0)
 				return 0;
@@ -242,8 +242,7 @@ namespace tinyply
 					{
 						if (p.name == propertyKey)
 						{
-							if (PropertyTable[property_type_for_type(source)].stride != PropertyTable[p.propertyType].stride)
-								throw std::runtime_error("destination vector is wrongly typed to hold this property");
+                            dataSize = PropertyTable[p.propertyType].stride;
 							return e.size;
 
 						}
@@ -297,11 +296,12 @@ namespace tinyply
 				else continue;
 			}
 
-			size_t totalInstanceSize = [&]() { size_t t = 0; for (auto c : instanceCounts) { t += c; } return t; }() * listCount;
-			source.resize(totalInstanceSize); // this satisfies regular properties; `cursor->realloc` is for list types since tinyply uses single-pass parsing
+			totalInstanceSize = [&]() { size_t t = 0; for (auto c : instanceCounts) { t += c; } return t; }() * listCount;
+			source = new char[dataSize*totalInstanceSize];
+//			source.resize((size_t)(totalInstanceSize*propertyScale)); // this satisfies regular properties; `cursor->realloc` is for list types since tinyply uses single-pass parsing
 			cursor->offset = 0;
-			cursor->vector = &source;
-			cursor->data = reinterpret_cast<uint8_t *>(source.data());
+			cursor->vector = source;
+			cursor->data = reinterpret_cast<uint8_t *>(source);
 
 			if (listCount > 1)
 			{
