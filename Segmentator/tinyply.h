@@ -242,7 +242,7 @@ namespace tinyply
 					{
 						if (p.name == propertyKey)
 						{
-                            dataSize = PropertyTable[p.propertyType].stride;
+						    dataSize = PropertyTable[p.propertyType].stride;
 							return e.size;
 
 						}
